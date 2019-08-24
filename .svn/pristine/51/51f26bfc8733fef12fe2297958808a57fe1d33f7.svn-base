@@ -1,0 +1,68 @@
+<template>
+    <div class="header">
+        <van-nav-bar title="360评估" left-arrow @click-left="onClickLeft"
+                     fixed v-if="isClosed" >
+        </van-nav-bar>
+        <van-nav-bar title="360评估"  @click-left="onClickLeft"
+                     fixed v-if="!isClosed" >
+        </van-nav-bar>
+    </div>
+</template>
+
+<script>
+    export default {
+        name: "AssessHeader",
+        props:{
+            closed:Boolean
+        },
+        data() {
+            return {
+                isClosed :this.closed,
+            }
+        },
+        create() {
+
+        },
+
+        methods: {
+            onClickLeft() {
+                if (this.$route.name == 'AssessContent') {
+                    this.webApp.WebCallApp("CmdGoBack", {}, (res) => {});
+                }else {
+                    this.$router.go(-1)
+                }
+
+            }
+        },
+        watch:{
+            closed(newValue,oldValue){
+                    this.isClosed = newValue;
+                }
+
+        }
+    }
+</script>
+
+<style scoped>
+    .header {
+        width: 100%;
+        height: 46px;
+        background: #1e80f9;
+        overflow: hidden;
+    }
+    .header /deep/ .van-nav-bar {
+        width: 100%;
+        height: 46px;
+        background: #1e80f9;
+        overflow: hidden;
+    }
+    .header /deep/ .van-nav-bar__title {
+        color: #fff;
+        font-size: 16px;
+    }
+    .header /deep/ .van-icon {
+        color: #fff;
+        font-size: 22px;
+    }
+
+</style>

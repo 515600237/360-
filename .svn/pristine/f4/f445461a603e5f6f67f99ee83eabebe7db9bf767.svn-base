@@ -1,0 +1,13 @@
+<script type="text/javascript">
+  const staticData = {
+    humanId: "",
+    instituteId:"",
+      onlyYou:0,
+
+  };
+
+  export default
+  {
+    staticData,
+  }
+</script>

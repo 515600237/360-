@@ -1,0 +1,250 @@
+<template>
+  <div class="content">
+    <van-pull-refresh v-model="isLoading"
+                      @refresh="onRefresh"
+                      :animation-duration="500"
+    >
+      <van-list
+        v-model="loading"
+        :finished="finished"
+        finished-text="没有更多了"
+        :error.sync="error"
+        error-text="请求失败，缺少参数"
+        @load="onLoad"
+      >
+       <!-- <van-tab title="评估带教医师" class="assess">-->
+          <div class="teacher-content" v-for="(item,index) in content">
+            <div class="content-top">
+              <div  :class="[{'highLight':item.evalStatus==1},{'board':item.evalStatus==0}]">{{item.evalStatusName}}</div>
+              <div class="content-header">
+                <span>{{item.targetRoleName}}:</span><span>{{item.targetName}}</span>
+              </div>
+              <ul class="content-middle">
+                <li>
+                  <p>科室:<span>{{item.targetDeptName}}</span></p>
+                </li>
+                <li>
+                  <p>评估期数:<span>{{item.name}}-{{item.term}}</span></p>
+                </li>
+                <li>
+                  <p>评估时间:<span>{{item.startTime}}</span></p>
+                </li>
+              </ul>
+              <div class="content-footer">
+                <span>评估截止时间:</span><span>{{item.endTime}}</span>
+              </div>
+              <van-button
+                        class="assessbtn"
+                      type="info" block size="small"
+                          @click="handleTo(item,index)"
+                v-show="canAssess(item)"
+              >
+
+                开始评估
+              </van-button>
+            </div>
+          </div>
+     <!--   </van-tab>-->
+      </van-list>
+    </van-pull-refresh>
+   <!-- </van-tabs>-->
+
+  </div>
+</template>
+
+<script>
+  export default {
+    name: "AssessContent",
+    data() {
+      return {
+        isActived:true,
+        isActived1:false,
+        humanId:"",
+        instituteId:"",
+        active: 0,
+        count: 0,
+        page: 1,
+        pageMax: 200,
+        content: [],
+        loading: false,
+        finished: false,
+        text: '已结束',
+        flag: false,
+        obj:{},
+        error:null,
+        isLoading:false,
+
+      }
+    },
+    methods: {
+      onRefresh() {
+          this.getAssessinfo();
+      },
+      handleTo(item) {
+        this.get(item);
+
+      },
+      canAssess(item){
+        let currentTime=Date.parse(new Date());
+        let itemTime= Date.parse(item.endTime);
+        const showFlag = item.evalStatus==0 && (itemTime> currentTime);
+        return showFlag;
+      },
+      onClickLeft(){},
+
+      onLoad() {
+        this.finished = true;
+      },
+      /****************数据请求********************/
+      get(item){
+        const postJson = {
+          termId: item.termId,
+          caId: this.Global.staticData.humanId
+        };
+
+        this.$http({
+          method: "POST",
+          url: "/test/app/eval/check",
+          data: postJson,
+        }).then((res)=>{
+          if (res.data.code === -1) {
+            this.$toast(res.data.msg);
+          }else{
+            this.$router.push({
+              path: '/Answer',
+              query: {
+                normId: item.normId,
+                termId: item.termId,
+                id: item.id,
+              }
+            });
+          }
+
+        });
+
+      },
+
+      getAssessinfo() {
+        this.$http({
+          method: 'post',
+          url: '/test/app/eval/list',
+          data: {
+            "page": this.page,
+            "pageMax": this.pageMax,
+            "caId": this.Global.staticData.humanId,
+           /* "orgId": this.Global.staticData.instituteId*/
+          },
+        }).then((res) => {
+          this.getsucess(res);
+
+        })
+      },
+      getsucess(res) {
+        console.log(res);
+        if (res.data.code == 0) {
+          if(!res.data.body.result.length){
+            this.finished = true;
+          }
+          this.content = res.data.body.result;
+          console.log(this.content)
+          this.count = res.data.body.count;
+
+          this.loading = false;
+          this.isLoading = false;
+        }
+      },
+    },
+    created(){
+    },
+    mounted() {
+      this.getAssessinfo();
+
+    },
+  }
+</script>
+
+<style lang="scss" scoped>
+  .header /deep/ .van-nav-bar {
+    width: 100%;
+    height: 46px;
+    background: #1e80f9;
+    overflow: hidden;
+  }
+  .header /deep/ .van-nav-bar__title {
+    color: #fff;
+    font-size: 16px;
+  }
+  .header /deep/ .van-icon {
+    color: #fff;
+    font-size: 22px;
+  }
+  .teacher-content {
+    width: 100%;
+    height: 175px;
+    border-top: 12px solid #ebebeb;
+    position: relative;
+    padding: 15px;
+    box-sizing: border-box;
+  }
+
+  .content-top {
+    width: 100%;
+    height: 135px;
+  }
+
+  .content-header {
+    font-size: 14px;
+  }
+
+  .content-middle {
+    margin: 10px 0 10px 0;
+  }
+
+  .content-middle li:nth-of-type(1) {
+    text-indent: 24px;
+  }
+
+  .content-middle li:nth-of-type(2) {
+    margin: 10px 0;
+  }
+
+  .content-middle span {
+    margin-left: 17px;
+  }
+
+  .content-footer {
+    color: #108bce;
+    margin-bottom: 10px;
+  }
+  .teacher-content /deep/ .van-button {
+    width: 100%;
+
+  }
+
+  .board {
+    width: 60px;
+    height: 30px;
+    background: #bebebe;
+    position: absolute;
+    color:#fff;
+    text-align: center;
+    line-height: 30px;
+    right: 10px;
+    top: -5px;
+  }
+
+  .highLight {
+    width: 60px;
+    height: 30px;
+    color:#fff;
+    background: #f59503;
+    position: absolute;
+    text-align: center;
+    line-height: 30px;
+    right: 10px;
+    top: -5px;
+  }
+  .assessbtn{
+    display: block;
+  }
+</style>

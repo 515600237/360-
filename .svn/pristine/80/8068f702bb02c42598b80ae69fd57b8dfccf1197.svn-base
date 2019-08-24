@@ -1,0 +1,58 @@
+<template>
+    <div id="app">
+        <AssessHeader :closed="closed"></AssessHeader>
+        <router-view/>
+    </div>
+</template>
+
+<script>
+    import AssessHeader from "./components/components/AssessHeader"
+    export default {
+        name: 'App',
+        components: {
+            AssessHeader,
+        },
+        data(){
+            return {
+                closed:true
+            }
+        },
+        created() {
+            let url = window.location.href;
+            let pos = url.substring(url.indexOf("?") + 1)
+            let urlobj = {}
+            let urlarr = pos.split("&")
+            for (let i = 0; i < urlarr.length; i++) {
+                let urlstr = urlarr[i].indexOf("=")
+                let name = urlarr[i].substring(0, urlstr)
+                let value = urlarr[i].substring(urlstr + 1)
+                urlobj[name] = value
+            }
+            if(!(urlobj["humanId"]||urlobj["instituteId"])){
+                this.$toast("无权限")
+            }
+            this.Global.staticData.humanId= urlobj["humanId"];
+            this.Global.staticData.instituteId= urlobj["instituteId"];
+            this.Global.staticData.onlyYou = urlobj["onlyYou"]
+
+
+            if (this.Global.staticData.onlyYou != null && this.Global.staticData.onlyYou == 1) {
+                this.closed = false;
+            }else{
+                this.closed = true;
+            }
+        },
+
+    }
+</script>
+
+<style>
+    #app {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        display: -webkit-flex;
+        display: -moz-flex;
+        flex-direction: column;
+    }
+</style>

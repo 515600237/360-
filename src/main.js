@@ -1,0 +1,39 @@
+// The Vue build version to load with the `import` command
+// (runtime-only or standalone) has been set in webpack.base.conf with an alias.
+import Vue from 'vue'
+import App from './App'
+import router from './router'
+import "./common/border.css"
+import "./common/reset.css"
+import Vant from 'vant';
+import 'vant/lib/index.css';
+import 'lib-flexible'
+import axios from "axios"
+import _Global from "./common/Global"
+
+import {
+  AppCallBacks,
+  AppCommendBackHandlers,
+  AppCommendKeyboardBounceUp,
+  AppMsgHandlers
+} from './webApp/AppMsgHandlers'
+
+import webApp from './webApp/index'
+
+Vue.config.productionTip = false
+Vue.use(Vant);
+
+
+/* eslint-disable no-new */
+Vue.prototype.$http = axios;
+Vue.prototype.Global = _Global;
+
+Vue.prototype.webApp = webApp;
+Vue.prototype.WebBack = AppCommendBackHandlers;
+Vue.prototype.Keyboar = AppCommendKeyboardBounceUp;
+new Vue({
+  el: '#app',
+  router,
+  components: { App },
+  template: '<App/>'
+});

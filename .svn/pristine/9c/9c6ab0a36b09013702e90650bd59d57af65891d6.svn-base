@@ -1,0 +1,249 @@
+<template>
+  <div class="answer">
+    <div class="answer-switch" ref="QueSwipe">
+      <van-swipe ref="swipe" :loop="false" :touchable="false" :show-indicators="false">
+        <van-swipe-item  v-for="(item,index) in questionList" :key="index" @change="onChange(index)">
+          <div class="answer-content">
+            <div class="answer-header">
+              <p><span>{{index+1}}</span>.{{item.content}}</p>
+            </div>
+            <div class="amswer-middle" v-if="item.type==1">
+              <van-radio-group v-model="item.optionId" >
+                <van-radio :name='item.id' v-for="(item,index) in item.questionOptionList
+" :key="index">{{item.content}}
+                </van-radio>
+              </van-radio-group>
+            </div>
+            <div class="amswer-middle" v-if="item.type==2">
+              <textarea class="text" v-model="item.content1" maxlength="180" @input="descArea(item)">
+              </textarea>
+              <p class="pay-service-textarea-text"><span>{{remnant}}</span>/180</p>
+            </div>
+          </div>
+        </van-swipe-item>
+      </van-swipe>
+    </div>
+    <div class="answer-bottom">
+      <button @click="AnswerPrev" class="btn" :disabled="count == 0"  :class="{'disable':count ==0}">上一题</button>
+      <button @click="AnswerNext()" class="btn endAnswer" v-if="count< questionList.length-1">下一题</button>
+      <button class="btn submit" @click="submitQuestion()" v-if="count ==questionList.length-1">提交</button>
+    </div>
+  </div>
+</template>
+<script>
+
+  export default {
+    name: "Answer",
+    data() {
+      return {
+        radio: 0,
+        count: 0,
+        normId: 0,
+        disabled:'false',
+        questionList: [],
+        matchId:0,
+        termId:0,
+        remnant: 0,
+        index:0,
+      }
+    },
+    methods: {
+      descArea(item){
+        console.log(item)
+          if(item.content1 && item.content1.length){
+            let  txtVal = item.content1.length;
+            this.remnant = txtVal;
+          }
+
+        },
+
+      answerQuestion(normId) {
+        this.$http({
+          method: 'post',
+          url: '/test/app/eval/questions',
+          data: {
+            "normId": normId,
+            "caId": this.Global.staticData.humanId,
+            // "caId": "00f976f68ecc42368b8f83082d830ce8",
+            // "orgId": "bb716ea2d8034b5badfb83efd9a11f60"
+          },
+        }).then((res) => {
+            if(res.data.code != 0){
+              this.$toast("请求失败，请返回")
+              return
+            }else{
+              this.sucess(res)
+            }
+
+
+        })
+      },
+      sucess(res) {
+        console.log(res)
+        this.questionList = res.data.body;
+      },
+      submitQuestion() {
+        let dataArr=[];
+        console.log(this.questionList);
+
+        this.questionList.forEach((item) =>{
+            let json={
+              questionId:item.id,
+              content:item.content1,
+              optionId:item.optionId,
+            }
+          dataArr.push(json);
+        })
+
+       let user = {
+          matchId:this.matchId,
+          // createrId:"00e790a8ef2b4c1e9aee41e460da6c3d",
+         createrId:this.Global.staticData.humanId,
+          // orgId:"bb716ea2d8034b5badfb83efd9a11f60",
+          termId:this.termId,
+          normId:this.normId,
+          detailList:dataArr
+        }
+        let value = this.questionList[this.count]
+        if(value.type==1 && typeof value.optionId != "number"){
+          this.$toast("请选择");
+          return;
+        }
+        this.postSubmit(user)
+      },
+      postSubmit(user) {
+        this.$http({
+          method: 'post',
+          url: '/test/base/answer/save',
+          data: user,
+        }).then((res) => {
+            this.$toast({
+              duration:600,
+            message:"提交成功"},)
+          setTimeout(()=>{
+            this.$router.push({name:"AssessContent"});
+          },1200)
+        })
+      },
+      onChange(index) {
+        this.count = index;
+        this.$refs.swipe.swipeTo(index)
+      },
+      AnswerPrev() {
+
+        this.count--;
+        this.onChange(this.count);
+      },
+      AnswerNext() {
+        let currentItem=this.questionList[this.count];
+        console.log(currentItem)
+
+        if((currentItem.type == 2 && !currentItem.content1)){
+          this.$toast("请输入内容");
+          return;
+        }
+        let value = this.questionList[this.count]
+         if(value.type==1 && typeof value.optionId != "number"){
+           this.$toast("请选择");
+           return;
+         }
+        this.count++;
+        if(this.count<this.questionList.length ){
+          this.onChange(this.count);
+        }
+      },
+    },
+
+    mounted() {
+
+      this.normId = this.$route.query.normId;
+      this.matchId = this.$route.query.id;
+      this.termId = this.$route.query.termId;
+      this.answerQuestion(this.normId)
+       // this.postSubmit(user)
+    }
+  }
+</script>
+
+<style scoped>
+
+
+
+  .answer-switch {
+    display: block;
+  }
+
+  .answer-bottom {
+    width: 100%;
+    height: 90px;
+    display: flex;
+    justify-content: space-between;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+  }
+
+  .answer-header {
+    letter-spacing: 1px;
+    line-height: 18px;
+    text-indent: 18px;
+  }
+
+  .amswer-middle {
+    margin-top: 5px;
+    line-height: 25px;
+  }
+
+  .answer-content {
+    padding: 18px;
+    box-sizing: border-box;
+  }
+
+  .btn {
+    width: 48%;
+    height: 30px;
+    background: #0995ed;
+    border-radius: 5px;
+  }
+
+  .disable {
+    width: 48%;
+    height: 30px;
+    background: #808080;
+  }
+
+  .enable {
+    width: 48%;
+    height: 30px;
+    background: #0995ed;
+  }
+
+  .submit {
+    width: 48%;
+    height: 30px;
+    background: #0995ed;
+  }
+
+  .endAnswer {
+    display: block;
+  }
+
+  .QuestionSub {
+    width: 100%;
+    padding: 15px;
+    box-sizing: border-box;
+  }
+
+  .text {
+    margin-top: 15px;
+    width: 100%;
+    height: 240px;
+    border: 1px solid #ccc;
+    font-size:14px;
+    text-indent: 14px;
+  }
+  .pay-service-textarea-text{
+    text-align: right;
+  }
+
+</style>
